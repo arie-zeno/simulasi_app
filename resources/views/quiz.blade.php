@@ -1,60 +1,44 @@
-<form action="{{ route('quiz.submit') }}" method="POST">
-    @csrf
-    <div style="display: flex;">
-        <!-- Kiri: Bahan Bacaan -->
-        <div style="width: 50%; padding: 10px; border-right: 1px solid #ccc;">
-            @foreach ($questions as $index => $question)
-                <div id="reading-{{ $index }}" style="{{ $index === 0 ? '' : 'display: none;' }}">
-                    <h3>Bahan Bacaan {{ $index + 1 }}</h3>
-                    <p>{{ $question->reading_material }}</p>
-                </div>
-            @endforeach
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center">
+        <h4>Selamat Mengerjakan, <strong>{{ session('name') }}</strong> dari <strong>{{ session('institution') }}</strong></h4>
+        <div class="alert alert-danger" id="timer">Waktu tersisa: <span id="countdown">300</span> detik</div>
+    </div>
+
+    <div class="row" style="background-color: white">
+        <div class="col-md-6 p-3">
+            <h4>Bahan Bacaan</h4>
+            <p >{{ $questions[0]->reading_material }}</p>
         </div>
-
-        <!-- Kanan: Soal -->
-        <div style="width: 50%; padding: 10px;">
-            @foreach ($questions as $index => $question)
-                <div id="question-{{ $index }}" style="{{ $index === 0 ? '' : 'display: none;' }}">
-                    <h3>Soal {{ $index + 1 }}</h3>
-                    <p>{{ $question->question }}</p>
+        <div class="col-md-6 p-3">
+            <h4>Soal</h4>
+            <form action="{{ route('submitQuiz') }}" method="POST">
+                @csrf
+                @foreach ($questions as $index => $question)
+                    <p><strong>{{ $index + 1 }}. {{ $question->question }}</strong></p>
                     @foreach (json_decode($question->options) as $option)
-                        <label>
-                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option }}">
-                            {{ $option }}
-                        </label><br>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="answer_{{ $question->id }}" value="{{ $option }}" required>
+                            <label class="form-check-label">{{ $option }}</label>
+                        </div>
                     @endforeach
-                </div>
-            @endforeach
-
-            <button type="button" id="prev" style="display: none;">Kembali</button>
-            <button type="button" id="next">Selanjutnya</button>
-            <button type="submit" id="submit" style="display: none;">Kirim</button>
+                @endforeach
+                <button type="submit" class="btn btn-success mt-3 w-100">Kumpulkan Jawaban</button>
+            </form>
         </div>
     </div>
-</form>
+</div>
 
 <script>
-    let current = 0;
-    const total = {{ count($questions) }};
-    document.getElementById('next').addEventListener('click', function() {
-        document.getElementById(`reading-${current}`).style.display = 'none';
-        document.getElementById(`question-${current}`).style.display = 'none';
-        current++;
-        document.getElementById(`reading-${current}`).style.display = '';
-        document.getElementById(`question-${current}`).style.display = '';
-        toggleButtons();
-    });
-    document.getElementById('prev').addEventListener('click', function() {
-        document.getElementById(`reading-${current}`).style.display = 'none';
-        document.getElementById(`question-${current}`).style.display = 'none';
-        current--;
-        document.getElementById(`reading-${current}`).style.display = '';
-        document.getElementById(`question-${current}`).style.display = '';
-        toggleButtons();
-    });
-    function toggleButtons() {
-        document.getElementById('prev').style.display = current === 0 ? 'none' : '';
-        document.getElementById('next').style.display = current === total - 1 ? 'none' : '';
-        document.getElementById('submit').style.display = current === total - 1 ? '' : 'none';
-    }
+    let timeLeft = 300;
+    setInterval(() => {
+        if (timeLeft > 0) {
+            document.getElementById("countdown").textContent = timeLeft--;
+        } else {
+            document.getElementById("timer").textContent = "Waktu Habis!";
+        }
+    }, 1000);
 </script>
+@endsection
